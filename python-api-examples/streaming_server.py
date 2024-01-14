@@ -696,11 +696,16 @@ Go back to <a href="/streaming_record.html">/streaming_record.html</a>
 
         stream = self.recognizer.create_stream()
         segment = 0
+        timestamp = 0.0
 
         while True:
             samples = await self.recv_audio_samples(socket)
             if samples is None:
                 break
+
+            currentTimestamp = float(samples[:1][0])
+            samples = samples[1:]
+
 
             # TODO(fangjun): At present, we assume the sampling rate
             # of the received audio samples equal to --sample-rate
@@ -713,10 +718,12 @@ Go back to <a href="/streaming_record.html">/streaming_record.html</a>
                 message = {
                     "text": result,
                     "segment": segment,
+                    "startTime": timestamp
                 }
                 if self.recognizer.is_endpoint(stream):
                     self.recognizer.reset(stream)
                     segment += 1
+                    timestamp = currentTimestamp
 
                 await socket.send(json.dumps(message))
 
